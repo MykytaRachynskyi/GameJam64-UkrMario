@@ -14,14 +14,21 @@ public class Movement : MonoBehaviour
     bool isGrounded = true;
     public AudioSource m_MyAudioSource;
 
+    [SerializeField] Animator m_Animator;
+
+    float m_PreviousHorizontalMove = 0f;
+    bool m_WasGrounded = false;
+
     private void Update()
     {
         horizontalMove = Input.GetAxisRaw("Horizontal") * runSpeed;
-        
-        if(Input.GetButtonDown("Jump") && isGrounded)
+
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
             jump = true;
             m_MyAudioSource.Play();
+
+            m_Animator.SetTrigger("JumpTrigger");
         }
     }
     void OnCollisionEnter(Collision collision)
@@ -44,7 +51,34 @@ public class Movement : MonoBehaviour
 
     void FixedUpdate()
     {
+        bool isMoving = horizontalMove != 0f;
+
+        if (m_PreviousHorizontalMove == 0f && horizontalMove != 0f)
+        {
+            // started moving
+            m_Animator.SetBool("IsRunning", true);
+        }
+        else if (m_PreviousHorizontalMove != 0f && horizontalMove == 0f)
+        {
+            // stopped moving
+            m_Animator.SetBool("IsRunning", false);
+        }
+
+        if (!isGrounded)
+        {
+            // falling
+            m_Animator.SetBool("IsFalling", true);
+        }
+        else
+        {
+            // not Falling
+            m_Animator.SetBool("IsFalling", false);
+        }
+
         controller.Move(horizontalMove * Time.fixedDeltaTime, jump);
         jump = false;
+
+        m_WasGrounded = isGrounded;
+        m_PreviousHorizontalMove = horizontalMove;
     }
 }
